@@ -1,0 +1,297 @@
+--create
+CREATE TABLE 
+(
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    phone_number VARCHAR(15) UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE drivers (
+    driver_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    phone_number VARCHAR(15) UNIQUE,
+    license_number VARCHAR(50) UNIQUE NOT NULL,
+    vehicle_id INT REFERENCES vehicles(vehicle_id),
+    rating NUMERIC(3, 2), -- Average rating out of 5.00
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE vehicles (
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_number VARCHAR(20) UNIQUE NOT NULL,
+    vehicle_type VARCHAR(50), -- e.g., 'Car', 'Bike', 'Van'
+    brand VARCHAR(50),
+    model VARCHAR(50),
+    manufacturing_year INT,
+    capacity INT DEFAULT 4, -- Number of passengers
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE trips (
+    trip_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    driver_id INT REFERENCES drivers(driver_id),
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    trip_status VARCHAR(50) NOT NULL, -- e.g., 'Completed', 'Cancelled'
+    fare NUMERIC(10, 2),
+    distance_km NUMERIC(10, 2), -- Trip distance in kilometers
+    trip_date DATE DEFAULT CURRENT_DATE
+);
+CREATE TABLE payments (
+    payment_id SERIAL PRIMARY KEY,
+    trip_id INT REFERENCES trips(trip_id),
+    amount NUMERIC(10, 2),
+    payment_method VARCHAR(50), -- e.g., 'Cash', 'Credit Card', 'E-wallet'
+    payment_status VARCHAR(50), -- e.g., 'Paid', 'Pending'
+    payment_date TIMESTAMP DEFAULT NOW()
+);
+
+--insert
+INSERT INTO users (name, email, phone_number) VALUES
+('John Doe', 'john.doe@example.com', '9800000001'),
+('Jane Smith', 'jane.smith@example.com', '9800000002'),
+('Aarav Shrestha', 'aarav.shrestha@example.com', '9800000003'),
+('Nisha Karki', 'nisha.karki@example.com', '9800000004');
+
+INSERT INTO vehicles (vehicle_number, vehicle_type, brand, model, manufacturing_year, capacity) VALUES
+('BA-1-1234', 'Car', 'Toyota', 'Corolla', 2018, 4),
+('BA-2-5678', 'Bike', 'Honda', 'CBR 150R', 2020, 2),
+('BA-3-9101', 'Van', 'Nissan', 'NV350', 2019, 8),
+('BA-4-1122', 'Car', 'Hyundai', 'i20', 2021, 4);
+
+INSERT INTO trips (user_id, driver_id, start_location, end_location, trip_status, fare, distance_km, trip_date) VALUES
+(1, 1, 'Kathmandu', 'Lalitpur', 'Completed', 500.00, 10.0, '2025-01-01'),
+(2, 2, 'Pokhara', 'Chitwan', 'Completed', 1200.00, 50.0, '2025-01-02'),
+(3, 3, 'Bhaktapur', 'Kathmandu', 'Cancelled', 0.00, 0.0, '2025-01-03'),
+(4, 4, 'Dharan', 'Biratnagar', 'Completed', 800.00, 25.0, '2025-01-03'),
+(1, 2, 'Kathmandu', 'Bhaktapur', 'Completed', 400.00, 8.0, '2025-01-04');
+
+INSERT INTO drivers (name, phone_number, license_number, vehicle_id, rating) VALUES
+('Ram Bahadur', '9800000101', 'L12345', 1, 4.8),
+('Sita Tamang', '9800000102', 'L23456', 2, 4.5),
+('Kiran Thapa', '9800000103', 'L34567', 3, 4.2),
+('Mina Lama', '9800000104', 'L45678', 4, 4.7);
+
+INSERT INTO payments (trip_id, amount, payment_method, payment_status) VALUES
+(6, 500.00, 'Cash', 'Paid'),
+(7, 1200.00, 'Credit Card', 'Paid'),
+(8, 0.00, 'N/A', 'Pending'),
+(9, 800.00, 'E-wallet', 'Paid'),
+(10, 400.00, 'Cash', 'Paid');
+
+--total revenue
+select 
+	d.driver_id, d.name as driver_name,
+	count(t.trip_id) as total_trips,
+	sum(t.fare) as total_revenue
+from 
+	drivers as d
+Join
+	trips t on d.driver_id = t.driver_id
+where
+	t.trip_status = 'Completed'
+	AND t.trip_date Between (Current_date - Interval '1 month') AND Current_date
+Group by
+	d.driver_id,d.name
+order by 
+	total_revenue Desc;
+
+
+--2 User Activity Scenario: Identify users who have taken more than 5 trips but have not made any payments.
+SELECT 
+    u.user_id,
+    u.name,
+    COUNT(t.trip_id) AS total_trips
+FROM 
+    users u
+JOIN 
+    trips t ON u.user_id = t.user_id
+LEFT JOIN 
+    payments p ON t.trip_id = p.trip_id
+WHERE 
+    p.payment_id IS NULL
+GROUP BY 
+    u.user_id, u.name
+HAVING 
+    COUNT(t.trip_id) > 1;
+
+--3. Payment Statistics Scenario: Analyze the average payment amount by method.
+select
+	payment_method,
+	count(payment_id) as total_transaction,
+	round(avg(amount), 2) as average_payment,
+	sum(amount) as total_amount
+from 
+	payments
+where 
+	payment_status = 'Paid'
+group by 
+	payment_method
+order by 
+	total_amount desc;
+
+
+Here’s an extended schema for all the tables (drivers, vehicles, trips, users, and payments) along with PostgreSQL queries for intermediate and advanced analysis.
+
+Schema Design
+1. users Table
+sql
+Copy code
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    phone_number VARCHAR(15) UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+2. drivers Table
+sql
+Copy code
+CREATE TABLE drivers (
+    driver_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    phone_number VARCHAR(15) UNIQUE,
+    license_number VARCHAR(50) UNIQUE NOT NULL,
+    vehicle_id INT REFERENCES vehicles(vehicle_id),
+    rating NUMERIC(3, 2), -- Average rating out of 5.00
+    created_at TIMESTAMP DEFAULT NOW()
+);
+3. vehicles Table
+sql
+Copy code
+CREATE TABLE vehicles (
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_number VARCHAR(20) UNIQUE NOT NULL,
+    vehicle_type VARCHAR(50), -- e.g., 'Car', 'Bike', 'Van'
+    brand VARCHAR(50),
+    model VARCHAR(50),
+    manufacturing_year INT,
+    capacity INT DEFAULT 4, -- Number of passengers
+    created_at TIMESTAMP DEFAULT NOW()
+);
+4. trips Table
+sql
+Copy code
+CREATE TABLE trips (
+    trip_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    driver_id INT REFERENCES drivers(driver_id),
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    trip_status VARCHAR(50) NOT NULL, -- e.g., 'Completed', 'Cancelled'
+    fare NUMERIC(10, 2),
+    distance_km NUMERIC(10, 2), -- Trip distance in kilometers
+    trip_date DATE DEFAULT CURRENT_DATE
+);
+5. payments Table
+sql
+Copy code
+CREATE TABLE payments (
+    payment_id SERIAL PRIMARY KEY,
+    trip_id INT REFERENCES trips(trip_id),
+    amount NUMERIC(10, 2),
+    payment_method VARCHAR(50), -- e.g., 'Cash', 'Credit Card', 'E-wallet'
+    payment_status VARCHAR(50), -- e.g., 'Paid', 'Pending'
+    payment_date TIMESTAMP DEFAULT NOW()
+);
+Intermediate SQL Queries
+1. Revenue Analysis
+Scenario: Calculate total revenue and number of completed trips for each driver in the last month.
+
+sql
+Copy code
+SELECT 
+    d.driver_id,
+    d.name AS driver_name,
+    COUNT(t.trip_id) AS total_trips,
+    SUM(t.fare) AS total_revenue
+FROM 
+    drivers d
+JOIN 
+    trips t ON d.driver_id = t.driver_id
+WHERE 
+    t.trip_status = 'Completed'
+    AND t.trip_date BETWEEN (CURRENT_DATE - INTERVAL '1 month') AND CURRENT_DATE
+GROUP BY 
+    d.driver_id, d.name
+ORDER BY 
+    total_revenue DESC;
+2. User Activity
+Scenario: Identify users who have taken more than 5 trips but have not made any payments.
+
+sql
+Copy code
+SELECT 
+    u.user_id,
+    u.name,
+    COUNT(t.trip_id) AS total_trips
+FROM 
+    users u
+JOIN 
+    trips t ON u.user_id = t.user_id
+LEFT JOIN 
+    payments p ON t.trip_id = p.trip_id
+WHERE 
+    p.payment_id IS NULL
+GROUP BY 
+    u.user_id, u.name
+HAVING 
+    COUNT(t.trip_id) > 5;
+3. Payment Statistics
+Scenario: Analyze the average payment amount by method.
+
+sql
+Copy code
+SELECT 
+    payment_method,
+    COUNT(payment_id) AS total_transactions,
+    AVG(amount) AS average_payment,
+    SUM(amount) AS total_amount
+FROM 
+    payments
+WHERE 
+    payment_status = 'Paid'
+GROUP BY 
+    payment_method
+ORDER BY 
+    total_amount DESC;
+-- Advanced SQL Queries
+-- 1. Top Performing Drivers Scenario: Rank drivers based on their average rating and total trips completed.
+
+SELECT 
+    d.driver_id,
+    d.name AS driver_name,
+    d.rating,
+    COUNT(t.trip_id) AS total_trips,
+    RANK() OVER (ORDER BY d.rating DESC, COUNT(t.trip_id) DESC) AS rank
+FROM 
+    drivers d
+LEFT JOIN 
+    trips t ON d.driver_id = t.driver_id
+WHERE 
+    t.trip_status = 'Completed'
+GROUP BY 
+    d.driver_id, d.name, d.rating
+ORDER BY 
+    rank;
+
+-- 5. Monthly Growth in Revenue
+-- Scenario: Calculate the month-over-month growth in total revenue.
+
+SELECT 
+    DATE_TRUNC('month', payment_date) AS revenue_month,
+    SUM(amount) AS total_revenue,
+    LAG(SUM(amount)) OVER (ORDER BY DATE_TRUNC('month', payment_date)) AS previous_month_revenue,
+    (SUM(amount) - LAG(SUM(amount)) OVER (ORDER BY DATE_TRUNC('month', payment_date))) AS revenue_growth
+FROM 
+    payments
+WHERE 
+    payment_status = 'Paid'
+GROUP BY 
+    DATE_TRUNC('month', payment_date)
+ORDER BY 
+    revenue_month;
+
+
+
