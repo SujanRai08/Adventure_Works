@@ -1,0 +1,255 @@
+Fundamentals and Core SQL Concepts
+1. Schema Design and Normalization
+Scenario: Design a database for a ride-sharing application in Nepal.
+
+Tables: drivers, vehicles, trips, users, payments.
+# creating
+-- Example of a table for storing user data
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    phone_number VARCHAR(15),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Example of trip data linked to users and drivers
+CREATE TABLE trips (
+    trip_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    driver_id INT REFERENCES drivers(driver_id),
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    trip_status VARCHAR(50), -- e.g., 'Completed', 'Cancelled'
+    fare NUMERIC(10, 2),
+    trip_date DATE DEFAULT CURRENT_DATE
+);
+
+2. Data Retrieval Basics
+Scenario: Retrieve all completed trips for users in Kathmandu, sorted by the latest trip date.SELECT 
+    u.name AS user_name,
+    t.start_location,
+    t.end_location,
+    t.fare
+FROM 
+    trips t
+JOIN 
+    users u ON t.user_id = u.user_id
+WHERE 
+    t.trip_status = 'Completed'
+    AND t.start_location LIKE '%Kathmandu%'
+ORDER BY 
+    t.trip_date DESC;
+
+Here’s a detailed breakdown of real-world SQL scenarios with PostgreSQL for data engineering at intermediate and advanced levels. These examples are framed around real-world use cases that could be relevant in Nepal and internationally. They also focus on building a strong foundation and addressing potential interview questions.
+
+Fundamentals and Core SQL Concepts
+1. Schema Design and Normalization
+Scenario: Design a database for a ride-sharing application in Nepal.
+
+Tables: drivers, vehicles, trips, users, payments.
+sql
+Copy code
+-- Example of a table for storing user data
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    phone_number VARCHAR(15),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Example of trip data linked to users and drivers
+CREATE TABLE trips (
+    trip_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    driver_id INT REFERENCES drivers(driver_id),
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    trip_status VARCHAR(50), -- e.g., 'Completed', 'Cancelled'
+    fare NUMERIC(10, 2),
+    trip_date DATE DEFAULT CURRENT_DATE
+);
+2. Data Retrieval Basics
+Scenario: Retrieve all completed trips for users in Kathmandu, sorted by the latest trip date.
+
+sql
+Copy code
+SELECT 
+    u.name AS user_name,
+    t.start_location,
+    t.end_location,
+    t.fare
+FROM 
+    trips t
+JOIN 
+    users u ON t.user_id = u.user_id
+WHERE 
+    t.trip_status = 'Completed'
+    AND t.start_location LIKE '%Kathmandu%'
+ORDER BY 
+    t.trip_date DESC;
+Intermediate SQL Scenarios
+1. Aggregations
+Scenario: Calculate the total revenue and average fare for trips completed in 2024.
+
+SELECT 
+    SUM(fare) AS total_revenue,
+    AVG(fare) AS average_fare
+FROM 
+    trips
+WHERE 
+    trip_status = 'Completed'
+    AND trip_date BETWEEN '2024-01-01' AND '2024-12-31';
+
+2. Window Functions
+Scenario: Rank drivers based on the total number of completed trips in 2024.
+
+SELECT 
+    d.driver_id,
+    d.name AS driver_name,
+    COUNT(t.trip_id) AS total_trips,
+    RANK() OVER (ORDER BY COUNT(t.trip_id) DESC) AS rank
+FROM 
+    drivers d
+JOIN 
+    trips t ON d.driver_id = t.driver_id
+WHERE 
+    t.trip_status = 'Completed'
+    AND t.trip_date BETWEEN '2024-01-01' AND '2024-12-31'
+GROUP BY 
+    d.driver_id, d.name;
+
+3. Common Table Expressions (CTEs)
+Scenario: Identify users who have completed more than 10 trips but never cancelled a trip.
+
+WITH trip_counts AS (
+    SELECT 
+        user_id,
+        COUNT(*) AS completed_trips,
+        SUM(CASE WHEN trip_status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled_trips
+    FROM 
+        trips
+    GROUP BY 
+        user_id
+)
+SELECT 
+    u.user_id,
+    u.name
+FROM 
+    trip_counts tc
+JOIN 
+    users u ON tc.user_id = u.user_id
+WHERE 
+    tc.completed_trips > 10
+    AND tc.cancelled_trips = 0;
+
+Advanced SQL Scenarios
+1. Advanced Joins and Subqueries
+Scenario: Find the most popular starting location and its total trip count in 2024.
+
+SELECT 
+    start_location,
+    COUNT(*) AS total_trips
+FROM 
+    trips
+WHERE 
+    trip_status = 'Completed'
+    AND trip_date BETWEEN '2024-01-01' AND '2024-12-31'
+GROUP BY 
+    start_location
+ORDER BY 
+    total_trips DESC
+LIMIT 1;
+
+2. JSON and JSONB Handling
+Scenario: Store and retrieve user preferences stored in a JSONB column.
+
+-- Adding a JSONB column to store preferences
+ALTER TABLE users ADD COLUMN preferences JSONB;
+
+-- Updating user preferences
+UPDATE users
+SET preferences = '{"preferred_language": "English", "receive_notifications": true}'
+WHERE user_id = 1;
+
+-- Querying data from JSONB
+SELECT 
+    user_id,
+    preferences ->> 'preferred_language' AS preferred_language,
+    preferences ->> 'receive_notifications' AS receive_notifications
+FROM 
+    users;
+
+3. Recursive Queries
+Scenario: Analyze hierarchical data like department employees reporting to a manager.
+
+sql
+-- Recursive query to list all employees under a specific manager
+WITH RECURSIVE employee_hierarchy AS (
+    SELECT 
+        employee_id, 
+        name, 
+        manager_id
+    FROM 
+        employees
+    WHERE 
+        manager_id IS NULL -- Start from the top-level manager
+    UNION ALL
+    SELECT 
+        e.employee_id, 
+        e.name, 
+        e.manager_id
+    FROM 
+        employees e
+    JOIN 
+        employee_hierarchy eh ON e.manager_id = eh.employee_id
+)
+SELECT 
+    *
+FROM 
+    employee_hierarchy;
+
+4. Query Optimization
+Scenario: Optimize a query for large datasets using indexes.
+
+-- Create an index on the trip_date column for faster filtering
+CREATE INDEX idx_trip_date ON trips(trip_date);
+
+-- Optimized query to retrieve trips for a specific date
+EXPLAIN ANALYZE
+SELECT 
+    trip_id, start_location, end_location
+FROM 
+    trips
+WHERE 
+    trip_date = '2024-07-15';
+
+
+5. Partitioning
+Scenario: Partition the trips table by year for better performance.
+
+-- Create a partitioned table
+CREATE TABLE trips_partitioned (
+    trip_id SERIAL,
+    user_id INT,
+    driver_id INT,
+    start_location VARCHAR(255),
+    end_location VARCHAR(255),
+    trip_status VARCHAR(50),
+    fare NUMERIC(10, 2),
+    trip_date DATE
+) PARTITION BY RANGE (trip_date);
+
+-- Create partitions
+CREATE TABLE trips_2023 PARTITION OF trips_partitioned FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+CREATE TABLE trips_2024 PARTITION OF trips_partitioned FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+Interview Focus Areas
+Joins: Explain different types of joins (INNER, OUTER, LEFT, RIGHT, CROSS).
+Indexes: When to use them and their trade-offs.
+Window Functions: Advanced aggregations like ROW_NUMBER, RANK, LEAD, LAG.
+CTEs and Subqueries: Writing reusable queries and breaking down complex logic.
+Performance Tuning: Use EXPLAIN ANALYZE and optimize queries with indexing and partitioning.
+Database Design: Normalize schema for OLTP and denormalize for OLAP.
+Advanced Data Types: Use of ARRAY, JSONB, and handling unstructured data.
