@@ -1,0 +1,178 @@
+Window functions are crucial in data engineering for analytical queries, ranking, and performing calculations across subsets of data without collapsing the rows into aggregates. Here’s a list of important window functions used in data engineering, along with explanations and examples:
+
+1. ROW_NUMBER
+Assigns a unique, sequential number to each row within a partition, starting at 1.
+Often used for deduplication or selecting specific rows.
+Example: Rank Drivers Based on Trips
+sql
+Copy code
+SELECT 
+    driver_id,
+    trip_date,
+    ROW_NUMBER() OVER (PARTITION BY driver_id ORDER BY trip_date DESC) AS trip_rank
+FROM 
+    trips;
+Result: Assigns 1 to the most recent trip for each driver.
+Driver ID	Trip Date	Trip Rank
+101	2025-01-10	1
+101	2025-01-09	2
+102	2025-01-11	1
+2. RANK
+Assigns a rank to each row within a partition. Rows with the same values get the same rank, and the next rank is skipped.
+Used for ranking based on a specific column.
+Example: Rank Products by Sales
+sql
+Copy code
+SELECT 
+    product_id,
+    SUM(sales_amount) AS total_sales,
+    RANK() OVER (ORDER BY SUM(sales_amount) DESC) AS sales_rank
+FROM 
+    sales
+GROUP BY 
+    product_id;
+Result: Ranks products based on total sales, skipping ranks for ties.
+Product ID	Total Sales	Sales Rank
+P101	5000	1
+P102	4000	2
+P103	4000	2
+P104	3000	4
+3. DENSE_RANK
+Similar to RANK, but it does not skip ranks for ties.
+Useful when gaps in ranking are not desirable.
+Example: Rank Customers by Revenue
+sql
+Copy code
+SELECT 
+    customer_id,
+    SUM(revenue) AS total_revenue,
+    DENSE_RANK() OVER (ORDER BY SUM(revenue) DESC) AS revenue_rank
+FROM 
+    customers
+GROUP BY 
+    customer_id;
+Result: No gaps in ranks for ties.
+Customer ID	Total Revenue	Revenue Rank
+C101	8000	1
+C102	7000	2
+C103	7000	2
+C104	6000	3
+4. LAG
+Retrieves the value of a column from the previous row within the same partition.
+Used for comparing a row with its predecessor.
+Example: Monthly Revenue Growth
+sql
+Copy code
+SELECT 
+    DATE_TRUNC('month', order_date) AS order_month,
+    SUM(order_amount) AS monthly_revenue,
+    LAG(SUM(order_amount)) OVER (ORDER BY DATE_TRUNC('month', order_date)) AS prev_month_revenue,
+    (SUM(order_amount) - LAG(SUM(order_amount)) OVER (ORDER BY DATE_TRUNC('month', order_date))) AS revenue_growth
+FROM 
+    orders
+GROUP BY 
+    DATE_TRUNC('month', order_date)
+ORDER BY 
+    order_month;
+Order Month	Monthly Revenue	Prev Month Revenue	Revenue Growth
+2024-01	5000	NULL	NULL
+2024-02	6000	5000	1000
+2024-03	7000	6000	1000
+5. LEAD
+Retrieves the value of a column from the next row within the same partition.
+Used to compare a row with its successor.
+Example: Predict Next Month’s Revenue
+sql
+Copy code
+SELECT 
+    DATE_TRUNC('month', payment_date) AS payment_month,
+    SUM(amount) AS monthly_revenue,
+    LEAD(SUM(amount)) OVER (ORDER BY DATE_TRUNC('month', payment_date)) AS next_month_revenue
+FROM 
+    payments
+GROUP BY 
+    DATE_TRUNC('month', payment_date)
+ORDER BY 
+    payment_month;
+Payment Month	Monthly Revenue	Next Month Revenue
+2024-01	5000	6000
+2024-02	6000	7000
+2024-03	7000	NULL
+6. NTILE
+Divides rows into a specified number of buckets and assigns a bucket number to each row.
+Useful for percentile analysis or distributing data evenly.
+Example: Split Sales into Quartiles
+sql
+Copy code
+SELECT 
+    product_id,
+    sales_amount,
+    NTILE(4) OVER (ORDER BY sales_amount DESC) AS sales_quartile
+FROM 
+    products;
+Product ID	Sales Amount	Sales Quartile
+P101	10000	1
+P102	8000	1
+P103	6000	2
+P104	3000	4
+7. FIRST_VALUE
+Returns the first value in a partition.
+Used for identifying starting values or trends.
+Example: Find First Purchase Date
+sql
+Copy code
+SELECT 
+    customer_id,
+    FIRST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) AS first_order_date
+FROM 
+    orders;
+Customer ID	First Order Date
+C101	2023-01-10
+C102	2023-03-05
+8. LAST_VALUE
+Returns the last value in a partition.
+Useful for identifying ending values.
+Example: Find Latest Purchase Date
+sql
+Copy code
+SELECT 
+    customer_id,
+    LAST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_order_date
+FROM 
+    orders;
+Customer ID	Last Order Date
+C101	2023-12-20
+C102	2023-11-15
+9. CUME_DIST (Cumulative Distribution)
+Calculates the cumulative distribution of a value within a partition.
+Shows the proportion of rows that are below or equal to the current row.
+Example: Revenue Distribution
+sql
+Copy code
+SELECT 
+    customer_id,
+    revenue,
+    CUME_DIST() OVER (ORDER BY revenue DESC) AS cumulative_distribution
+FROM 
+    customer_revenue;
+Customer ID	Revenue	Cumulative Distribution
+C101	10000	0.25
+C102	8000	0.50
+10. PERCENT_RANK
+Calculates the relative rank of a row as a percentage of the total rows.
+Example: Revenue Percentage Rank
+sql
+Copy code
+SELECT 
+    customer_id,
+    revenue,
+    PERCENT_RANK() OVER (ORDER BY revenue DESC) AS percent_rank
+FROM 
+    customer_revenue;
+Customer ID	Revenue	Percent Rank
+C101	10000	0.0
+C102	8000	0.5
+Use Cases in Data Engineering
+ETL Pipelines: Handling transformations, such as deduplication, ranking, or calculating trends.
+Reporting: Generating analytical insights like revenue trends, customer rankings, and percentile analysis.
+Data Warehousing: Organizing data into meaningful structures for efficient querying.
