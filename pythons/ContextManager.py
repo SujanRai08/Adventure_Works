@@ -20,3 +20,16 @@ class FileManager:
 
 with FileManager('example.txt', 'w') as f:
     f.write("Hello, World!")
+
+
+class FileManager:
+    def __init__(self,name,mode):
+        self.name = name
+        self.mode = mode
+    def __enter__(self):
+        self.file = open(self.name,self.mode)
+        return self.file
+    def __exit__(self,exc_type,exc_val,exc_tb):
+        self.file.close()
+with FileManager('example.txt','r') as f:
+    f.write('hello, world!')
