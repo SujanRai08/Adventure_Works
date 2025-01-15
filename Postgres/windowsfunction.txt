@@ -4,8 +4,6 @@ Window functions are crucial in data engineering for analytical queries, ranking
 Assigns a unique, sequential number to each row within a partition, starting at 1.
 Often used for deduplication or selecting specific rows.
 Example: Rank Drivers Based on Trips
-sql
-Copy code
 SELECT 
     driver_id,
     trip_date,
@@ -21,8 +19,6 @@ Driver ID	Trip Date	Trip Rank
 Assigns a rank to each row within a partition. Rows with the same values get the same rank, and the next rank is skipped.
 Used for ranking based on a specific column.
 Example: Rank Products by Sales
-sql
-Copy code
 SELECT 
     product_id,
     SUM(sales_amount) AS total_sales,
@@ -41,8 +37,6 @@ P104	3000	4
 Similar to RANK, but it does not skip ranks for ties.
 Useful when gaps in ranking are not desirable.
 Example: Rank Customers by Revenue
-sql
-Copy code
 SELECT 
     customer_id,
     SUM(revenue) AS total_revenue,
@@ -61,8 +55,6 @@ C104	6000	3
 Retrieves the value of a column from the previous row within the same partition.
 Used for comparing a row with its predecessor.
 Example: Monthly Revenue Growth
-sql
-Copy code
 SELECT 
     DATE_TRUNC('month', order_date) AS order_month,
     SUM(order_amount) AS monthly_revenue,
@@ -82,8 +74,6 @@ Order Month	Monthly Revenue	Prev Month Revenue	Revenue Growth
 Retrieves the value of a column from the next row within the same partition.
 Used to compare a row with its successor.
 Example: Predict Next Month’s Revenue
-sql
-Copy code
 SELECT 
     DATE_TRUNC('month', payment_date) AS payment_month,
     SUM(amount) AS monthly_revenue,
@@ -102,8 +92,6 @@ Payment Month	Monthly Revenue	Next Month Revenue
 Divides rows into a specified number of buckets and assigns a bucket number to each row.
 Useful for percentile analysis or distributing data evenly.
 Example: Split Sales into Quartiles
-sql
-Copy code
 SELECT 
     product_id,
     sales_amount,
@@ -119,8 +107,6 @@ P104	3000	4
 Returns the first value in a partition.
 Used for identifying starting values or trends.
 Example: Find First Purchase Date
-sql
-Copy code
 SELECT 
     customer_id,
     FIRST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date) AS first_order_date
@@ -133,8 +119,6 @@ C102	2023-03-05
 Returns the last value in a partition.
 Useful for identifying ending values.
 Example: Find Latest Purchase Date
-sql
-Copy code
 SELECT 
     customer_id,
     LAST_VALUE(order_date) OVER (PARTITION BY customer_id ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_order_date
@@ -147,8 +131,6 @@ C102	2023-11-15
 Calculates the cumulative distribution of a value within a partition.
 Shows the proportion of rows that are below or equal to the current row.
 Example: Revenue Distribution
-sql
-Copy code
 SELECT 
     customer_id,
     revenue,
@@ -161,8 +143,6 @@ C102	8000	0.50
 10. PERCENT_RANK
 Calculates the relative rank of a row as a percentage of the total rows.
 Example: Revenue Percentage Rank
-sql
-Copy code
 SELECT 
     customer_id,
     revenue,
