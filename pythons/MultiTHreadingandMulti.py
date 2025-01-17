@@ -57,3 +57,20 @@ for url in api_urls:
 for threads in thread:
     threads.join()
 print('all api callas completed')
+
+
+# mutliprocessing - runs tasks in separate processes, each with its own memory spaces. idea cpu-bound tasks 
+# processing large datasets
+# Imagine processing large CSV files, where each file contains millions of rows. Using multiprocessing, you can split the work across multiple processes.
+import multiprocessing
+import pandas as pd
+def process_file(file_name):
+    df = pd.read_csv(file_name)
+    result = df['column1'].mean()
+    print(f'processed {file_name}: mean = {result}')
+file_names =["file1.csv", "file2.csv", "file3.csv"]
+# Create a pool of workers
+with multiprocessing.Pool(processes=3) as pool:
+    pool.map(process_file, file_names)
+
+print("All files processed.")
