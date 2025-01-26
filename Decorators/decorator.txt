@@ -1,0 +1,35 @@
+in Python, decorators are powerful tools for modifying or 
+extending the behavior of functions, methods, or classes. 
+#In data engineering, decorators are often used to handle 
+tasks such as logging, caching, input validation, error
+ handling, retry mechanisms, and performance tracking. 
+ Below is a breakdown of commonly used decorators 
+ in data engineering:
+ 1. Built-in Python Decorators
+@staticmethod
+Used for defining static methods within classes, useful in scenarios where no instance-specific data is needed.
+
+class DataProcessor:
+    @staticmethod
+    def transform(data):
+        return [x * 2 for x in data]
+
+
+property 
+Allows defining getter and setter methods for managing object attributes more cleanly.
+
+mostly used
+Logging Decorator
+Tracks when functions are called and their parameters or results.
+Retry Decorator
+Retries a function if it raises specific exceptions.
+
+caching decorators
+Caches function results to improve performance, especially for expensive operations.
+
+validation Decorator
+Validates the input parameters of a function
+
+
+Performance Timer
+Measures the execution time of functions.
