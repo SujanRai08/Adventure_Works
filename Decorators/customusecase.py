@@ -49,17 +49,17 @@
 # Error Logging Decorator
 # Logs errors that occur during function execution.
 
-def error_logger(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            print(f'error in {func.__name__}: {e}')
-            raise
-    return wrapper
+# def error_logger(func):
+#     def wrapper(*args, **kwargs):
+#         try:
+#             return func(*args, **kwargs)
+#         except Exception as e:
+#             print(f'error in {func.__name__}: {e}')
+#             raise
+#     return wrapper
 
-@error_logger
-def divide(a, b):
-    divided = a/5
-    print(f'the divide of the {divided}')
-divide(0, 1)
+# @error_logger
+# def divide(a, b):
+#     divided = a/5
+#     print(f'the divide of the {divided}')
+# divide(0, 1)
