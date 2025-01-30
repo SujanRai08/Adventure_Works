@@ -14,15 +14,16 @@
 
 
 # property
-class Pipeline:
-    def __init__(self,name):
-        self._name = name
+# class Pipeline:
+#     def __init__(self,name):
+#         self._name = name
 
-    @property
-    def name(self):
-        return self._name
+#     @property
+#     def name(self):
+#         return self._name
     
-    @name.setter
-    def name(self,value):
-        self.__name = value
+#     @name.setter
+#     def name(self,value):
+#         self.__name = value
         
+
